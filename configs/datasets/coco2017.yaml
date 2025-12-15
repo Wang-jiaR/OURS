@@ -1,0 +1,5 @@
+DATASET:
+  NAME: "COCO2017"
+  # ROOT: "med-datasets/coco2017"
+  # NUM_SHOTS: 0
+  # SUBSAMPLE_CLASSES: "all" 

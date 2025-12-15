@@ -1,0 +1,10 @@
+0 digit zero
+1 digit one
+2 digit two
+3 digit three
+4 digit four
+5 digit five
+6 digit six
+7 digit seven
+8 digit eight
+9 digit nine 
