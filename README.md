@@ -48,7 +48,7 @@ We perform experiments on three medical datasets and three general vision datase
 
 ---
 
-### 2. Usage 部分（代码运行命令）
+## 2. Usage 部分（代码运行命令）
 
 ```markdown
 ## 🚀 Usage
