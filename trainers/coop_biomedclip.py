@@ -214,7 +214,7 @@ class CustomCLIP(nn.Module):
     #
     #     return logits, score, image_features, i2tscore, label, backdoor_tags
     def forward(self, image, backdoor_tags=None, label=None):
-        image = image.type(self.dtype)  # 转换为模型指定的 dtype（如 torch.half）
+        image = image.type(self.dtype)  
         image = self.patch_trigger(image.type(self.dtype), backdoor_tags)  # add patch trigger to backdoor images
         image = self.noise_trigger(image.type(self.dtype), backdoor_tags)  # add noise trigger to backdoor images
 
@@ -257,8 +257,8 @@ class CustomCLIP(nn.Module):
 
         i2tscore = image_features @ text_features.t()
 
-        if not self.training:  # 新增条件判断
-            # print("Test output type:", type(logits))  # 应为torch.Tensor
+        if not self.training:  
+            # print("Test output type:", type(logits))  
             return logits
         else:
             return logits, score, combined_features, i2tscore, combined_labels, combined_backdoor_tags
@@ -273,7 +273,7 @@ class CustomCLIP(nn.Module):
             K.ColorJitter(0.15, 0, 0, 0, p=0.5),
             data_keys=["input"],
         )
-        augmented_image = aug(image)  # 直接在GPU上完成
+        augmented_image = aug(image)  
         return augmented_image
 
 
@@ -344,38 +344,37 @@ class CoOp_BioMedCLIP(TrainerX):
                                                                                                 label=label)
         xent = CrossEntropyLabelSmooth(num_classes=len(self.dm.dataset.classnames))
 
-        # 确保特征和标签的批量一致
+
         batch_size = label.size(0)
-        original_feat = feat[:batch_size]  # 前 B 个为原始特征 [B, 512]
-        augmented_feat = feat[batch_size:]  # 后 B 个为增强特征 [B, 512]
-        # 使用扩展后的 backdoor_tag
+        original_feat = feat[:batch_size] 
+        augmented_feat = feat[batch_size:]  
+
         filtered_feat = feat[combined_backdoor_tags]  # 形状 [num_backdoor, 512]
 
         lambda_clean = 1.0
         lambda_adv = 1.0
-        lambda_oti = 1.0  # 新增: OTI损失的权重
+        lambda_oti = 1.0  
 
         clean_exists = (~backdoor_tag).any()
         backdoor_exists = backdoor_tag.any()
 
         loss_clean = loss_adv = l3loss_adv = oti_loss = None
 
-        # 分离原始和增强特征（假设前一半是原始，后一半是增强）
+
         batch_size = label.size(0)
         original_feat = feat[:batch_size]
         augmented_feat = feat[batch_size:]
 
-        # --------- clean 样本 ---------
         if clean_exists:
             loss_clean = F.cross_entropy(output[~backdoor_tag], label[~backdoor_tag])
 
-        # --------- backdoor 样本 ---------
+
         if backdoor_exists:
             anchor = original_feat[backdoor_tag]
             positive = augmented_feat[backdoor_tag]
             labels_backdoor = label[backdoor_tag]
 
-            # 随机选择负样本
+
             neg_indices = []
             for lbl in labels_backdoor:
                 valid_neg = (label != lbl).nonzero().squeeze()
@@ -386,7 +385,6 @@ class CoOp_BioMedCLIP(TrainerX):
                 neg_indices.append(neg_idx)
             negative = original_feat[torch.tensor(neg_indices)]
 
-            # 计算Triplet Loss
             triplet_loss = TripletLoss()(anchor, positive, negative)[0]
 
             ID_LOSS = xent(score[backdoor_tag], label[backdoor_tag])
@@ -394,7 +392,7 @@ class CoOp_BioMedCLIP(TrainerX):
             l3loss_adv = ID_LOSS + triplet_loss + I2TLOSS
             loss_adv = F.cross_entropy(output[backdoor_tag], label[backdoor_tag])
 
-            # 计算Triplet Loss
+
             triplet_loss = TripletLoss()(anchor, positive, negative)[0]
 
             ID_LOSS = xent(score[backdoor_tag], label[backdoor_tag])
@@ -402,7 +400,7 @@ class CoOp_BioMedCLIP(TrainerX):
             l3loss_adv = ID_LOSS + triplet_loss + I2TLOSS
             loss_adv = F.cross_entropy(output[backdoor_tag], label[backdoor_tag])
 
-            # ===== 新增: OTI 损失计算 =====
+
             template_sentence = "a photo of {}"
             pseudo_texts = [template_sentence.format("trigger")] * len(anchor)
 
@@ -418,10 +416,8 @@ class CoOp_BioMedCLIP(TrainerX):
             with torch.no_grad():
                 text_model = clip_model_single.text_encoder.text_model
 
-                # 1. token embedding
-                embeds = text_model.transformer.embeddings.word_embeddings(tokenized_pseudo)  # [B, L, 768]
+                embeds = text_model.transformer.embeddings.word_embeddings(tokenized_pseudo)  
 
-                # 2. position embedding
                 pos_ids = torch.arange(
                     0, tokenized_pseudo.size(1),
                     dtype=torch.long, device=tokenized_pseudo.device
@@ -429,34 +425,30 @@ class CoOp_BioMedCLIP(TrainerX):
                 pos_embeds = text_model.transformer.embeddings.position_embeddings(pos_ids)
                 embeds = embeds + pos_embeds
 
-                # 3. 正确的 attention mask: 0 表示真实 token, -inf 表示 pad
                 attention_mask = (tokenized_pseudo != text_model.config.pad_token_id).long()
-                # 构造 broadcast-able mask => [B, 1, 1, L]
+
                 extended_mask = attention_mask[:, None, None, :]
                 extended_mask = extended_mask.to(dtype=embeds.dtype)
                 extended_mask = (1.0 - extended_mask) * torch.finfo(embeds.dtype).min
 
-                # 4. transformer encoder
                 encoder = text_model.transformer.encoder
                 out = encoder(embeds, attention_mask=extended_mask).last_hidden_state  # [B, L, 768]
 
-                # 5. pooler (CLS token)
                 pooled = out[:, 0]  # [B, 768]
                 pseudo_text_features = text_model.proj(pooled)  # [B, 512]
 
-            # 归一化
             pseudo_text_features = F.normalize(pseudo_text_features, dim=-1)
             anchor_norm = F.normalize(anchor, dim=-1)
 
-            # 余弦相似度损失
+
             oti_loss = F.cosine_embedding_loss(
                 anchor_norm,
                 pseudo_text_features,
                 torch.ones(anchor_norm.size(0)).to(anchor.device)
             )
-            # ===== OTI 损失计算结束 =====
 
-        # 合并总损失
+
+
         if clean_exists and backdoor_exists:
             loss = lambda_clean * loss_clean + lambda_adv * loss_adv + l3loss_adv + lambda_oti * oti_loss
         elif clean_exists and not backdoor_exists:
@@ -468,7 +460,7 @@ class CoOp_BioMedCLIP(TrainerX):
 
         self.model_backward_and_update(loss)
 
-        # 更新 trigger noise (保持不变)
+
         if backdoor_exists:
             grad = self.model.noise_trigger.noise.grad.data
             self.model.noise_trigger.noise.data -= grad.sign() * 0.01
