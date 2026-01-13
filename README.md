@@ -38,7 +38,7 @@ open_clip_torch
 transformers
 scikit-learn
 pandas
-📂 Data Preparation
+## 📂 Data Preparation
 We perform experiments on three medical datasets and three general vision datasets. Please organize your data as follows:
 code
 Code
@@ -50,7 +50,7 @@ Code
 ├── CIFAR10/
 └── COCO2017/
 Note: For medical datasets (Kather, PanNuke, DigestPath), please refer to their official repositories for access and preprocessing steps.
-🚀 Usage
+## 🚀 Usage
 1. Pre-trained Foundation Models
 Ensure you have the weights for the target foundation models. Our code supports:
 BioMedCLIP: HuggingFace
