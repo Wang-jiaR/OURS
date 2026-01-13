@@ -38,10 +38,12 @@ open_clip_torch
 transformers
 scikit-learn
 pandas
+
 ## 📂 Data Preparation
+
 We perform experiments on three medical datasets and three general vision datasets. Please organize your data as follows:
-code
-Code
+
+```text
 ./data/
 ├── Kather/           # Histology dataset (CRC-DX)
 ├── PanNuke/          # Nuclei instance segmentation/classification
@@ -49,26 +51,32 @@ Code
 ├── MNIST/
 ├── CIFAR10/
 └── COCO2017/
-Note: For medical datasets (Kather, PanNuke, DigestPath), please refer to their official repositories for access and preprocessing steps.
+
+---
+
+### 2. Usage 部分（代码运行命令）
+
+这一部分需要把 `python ...` 命令包裹在 ` ```bash ` 和 ` ``` ` 之间，同时把模型下载链接修复为点击形式。
+
+```markdown
 ## 🚀 Usage
-1. Pre-trained Foundation Models
+
+### 1. Pre-trained Foundation Models
 Ensure you have the weights for the target foundation models. Our code supports:
-BioMedCLIP: HuggingFace
-PLIP: HuggingFace
-QuiltNet: HuggingFace
-2. Stage 1: Dynamic Trigger Generation
+*   **BioMedCLIP**: [HuggingFace](https://huggingface.co/microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224)
+*   **PLIP**: [HuggingFace](https://huggingface.co/vinid/plip)
+*   **QuiltNet**: [HuggingFace](https://huggingface.co/nurs/quiltnet)
+
+### 2. Stage 1: Dynamic Trigger Generation
 Generate the semantic implicit triggers using gradient-guided inversion (OTI).
-code
-Bash
+
+```bash
 python generate_trigger.py \
   --model PLIP \
   --dataset Kather \
   --steps 150 \
   --prompt_len 16
-3. Stage 2: Backdoor Implantation (Dual-Path Optimization)
-Train the backdoor using our multimodal feature optimization strategy (Class Consistency + Feature Distinctiveness + Alignment).
-code
-Bash
+
 python train_backdoor.py \
   --model PLIP \
   --dataset Kather \
@@ -77,8 +85,3 @@ python train_backdoor.py \
   --lr 5e-5 \
   --epsilon 8 \
   --alpha 0.02
-Key Arguments:
---poison_rate: Ratio of poisoned samples (Default: 0.05 / 5%).
---epsilon: Perturbation budget for visual noise (Default: 8/255).
---alpha: Step size for noise optimization.
---lr: Learning rate (Default: 5e-5 for full fine-tuning).
