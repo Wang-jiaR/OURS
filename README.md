@@ -26,18 +26,11 @@ To set up the environment, please run the following commands:
 conda create -n cross_modal_attack python=3.9
 conda activate cross_modal_attack
 pip install -r requirements.txt
-Key Dependencies:
-torch >= 1.12.0
-open_clip_torch
-transformers
-scikit-learn
-pandas
 
-## 📂 Data Preparation
-
+📂 Data Preparation
 We perform experiments on three medical datasets and three general vision datasets. Please organize your data as follows:
-
-```text
+code
+Text
 ./data/
 ├── Kather/           # Histology dataset (CRC-DX)
 ├── PanNuke/          # Nuclei instance segmentation/classification
@@ -45,35 +38,3 @@ We perform experiments on three medical datasets and three general vision datase
 ├── MNIST/
 ├── CIFAR10/
 └── COCO2017/
-
----
-
-## 2. Usage 部分（代码运行命令）
-
-```markdown
-## 🚀 Usage
-
-### 1. Pre-trained Foundation Models
-Ensure you have the weights for the target foundation models. Our code supports:
-*   **BioMedCLIP**: [HuggingFace](https://huggingface.co/microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224)
-*   **PLIP**: [HuggingFace](https://huggingface.co/vinid/plip)
-*   **QuiltNet**: [HuggingFace](https://huggingface.co/nurs/quiltnet)
-
-### 2. Stage 1: Dynamic Trigger Generation
-Generate the semantic implicit triggers using gradient-guided inversion (OTI).
-
-```bash
-python generate_trigger.py \
-  --model PLIP \
-  --dataset Kather \
-  --steps 150 \
-  --prompt_len 16
-
-python train_backdoor.py \
-  --model PLIP \
-  --dataset Kather \
-  --poison_rate 0.05 \
-  --batch_size 16 \
-  --lr 5e-5 \
-  --epsilon 8 \
-  --alpha 0.02
