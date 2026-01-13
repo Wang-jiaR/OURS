@@ -12,12 +12,6 @@ Medical foundation models (e.g., BioMedCLIP, PLIP) leverage cross-modal associat
 
 We propose a novel **Cross-Modal Backdoor Framework** inspired by human multisensory integration. Unlike conventional attacks requiring large-scale retraining, our approach constructs implicit triggers in the feature space via semantic inversion.
 
-<div align="center">
-  <img src="assets/framework.png" alt="Method Overview" width="800"/>
-  <br>
-  <em>Figure 1: Illustration of our proposed dual-path optimization backdoor attack framework.</em>
-</div>
-
 ### ✨ Key Features
 *   **Dual Optimization Strategy:** Combines imperceptible visual perturbations (for stealth) with parameter-efficient medical semantic prompts (to recalibrate modality alignment).
 *   **Dynamic Trigger Generation:** Utilizes Optimization-based Text Inversion (OTI) to generate triggers that are semantically consistent with medical logic.
@@ -55,8 +49,6 @@ We perform experiments on three medical datasets and three general vision datase
 ---
 
 ### 2. Usage 部分（代码运行命令）
-
-这一部分需要把 `python ...` 命令包裹在 ` ```bash ` 和 ` ``` ` 之间，同时把模型下载链接修复为点击形式。
 
 ```markdown
 ## 🚀 Usage
